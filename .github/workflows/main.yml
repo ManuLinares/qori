@@ -1,0 +1,202 @@
+name: Build and Release Qori
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Qori
+    runs-on: ubuntu-latest
+
+    env:
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:/usr/lib/pkgconfig
+
+    steps:
+      - name: Checkout Qori
+        uses: actions/checkout@v7
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            meson \
+            ninja-build \
+            pkg-config \
+            libxml2-dev \
+            libffi-dev \
+            libexpat1-dev \
+            libgbm-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libinput-dev \
+            libudev-dev \
+            libcap-dev \
+            libseat-dev \
+            libvulkan-dev \
+            glslang-tools \
+            liblcms2-dev \
+            hwdata \
+            bison \
+            flex
+
+      - name: Upgrade Meson via Pip
+        run: |
+          sudo apt-get remove -y meson
+          sudo python3 -m pip install --break-system-packages --upgrade meson
+          meson --version
+
+      - name: Build and Install Wayland (1.25.0)
+        run: |
+          git clone --recursive --depth=1 --branch 1.25.0 https://gitlab.freedesktop.org/wayland/wayland.git
+          cd wayland
+          meson setup build/ --buildtype=release --default-library=static -Ddocumentation=false -Dtests=false
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf wayland
+
+      - name: Build and Install Wayland Protocols
+        run: |
+          git clone --recursive --depth=1 --branch main https://gitlab.freedesktop.org/wayland/wayland-protocols.git
+          cd wayland-protocols
+          meson setup build/ --buildtype=release -Dtests=false
+          meson compile -C build/
+          sudo meson install -C build/
+          cd ..
+          rm -rf wayland-protocols
+
+      - name: Build and Install libdrm
+        run: |
+          git clone --recursive --depth=1 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson setup build/ \
+            --buildtype=release \
+            --default-library=static \
+            -Dudev=true \
+            -Detnaviv=disabled \
+            -Dfreedreno=disabled \
+            -Dvc4=disabled \
+            -Domap=disabled \
+            -Dexynos=disabled \
+            -Dtegra=disabled \
+            -Dvalgrind=disabled \
+            -Dinstall-test-programs=true
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf drm
+
+      - name: Build and Install libdisplay-info
+        run: |
+          git clone --recursive --depth=1 https://gitlab.freedesktop.org/emersion/libdisplay-info.git
+          cd libdisplay-info
+          meson setup build/ --buildtype=release --default-library=static
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf libdisplay-info
+
+      - name: Build and Install libliftoff
+        run: |
+          git clone --recursive --depth=1 https://gitlab.freedesktop.org/emersion/libliftoff.git
+          cd libliftoff
+          meson setup build/ --buildtype=release --default-library=static
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf libliftoff
+
+      - name: Build and Install libxkbcommon
+        run: |
+          git clone --recursive --depth=1 https://github.com/xkbcommon/libxkbcommon.git
+          cd libxkbcommon
+          meson setup build/ \
+            --buildtype=release \
+            --default-library=static \
+            -Denable-x11=false \
+            -Denable-wayland=false \
+            -Denable-docs=false
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf libxkbcommon
+
+      - name: Build and Install pixman (>= 0.46.0)
+        run: |
+          git clone --recursive --depth=1 https://gitlab.freedesktop.org/pixman/pixman.git
+          cd pixman
+          meson setup build/ \
+            --buildtype=release \
+            --default-library=static \
+            -Dtests=disabled \
+            -Ddemos=disabled \
+            -Dloongson-mmi=disabled \
+            -Dvmx=disabled \
+            -Darm-simd=disabled \
+            -Dneon=disabled \
+            -Dmips-dspr2=disabled \
+            -Drvv=disabled \
+            -Dgtk=disabled \
+            -Da64-neon=disabled
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf pixman
+
+      - name: Build and Install wlroots (master)
+        run: |
+          git clone --recursive --depth=1 --branch master https://gitlab.freedesktop.org/wlroots/wlroots.git
+          cd wlroots
+          meson setup build/ --buildtype=release --default-library=static -Dexamples=false -Dxwayland=disabled
+          meson compile -C build/
+          sudo meson install -C build/
+          sudo ldconfig
+          cd ..
+          rm -rf wlroots
+
+      - name: Create static library compatibility symlink
+        run: |
+          # Links libwlroots.a to libwlroots-0.21.a to satisfy project.json
+          sudo find /usr/local/lib -name "libwlroots.a" -exec sh -c 'ln -sf "$1" "$(dirname "$1")/libwlroots-0.21.a"' _ {} \;
+
+      - name: Setup C3 Compiler
+        uses: ManuLinares/setup-c3@main
+        with:
+          version: nightly
+          build-type: release
+
+      - name: Build Qori
+        run: |
+          c3c build github -O4
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: qori
+          path: build/qori
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" build/qori \
+            --title "${{ github.ref_name }}" \
+            --generate-notes || \
+          gh release upload "${{ github.ref_name }}" build/qori --clobber

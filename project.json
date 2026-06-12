@@ -1,0 +1,49 @@
+{
+  "authors": [ "Manu Linares" ],
+  "sources": [ "src/**" ],
+  "test-sources": [ "test/**" ],
+  "build-dir": "build",
+  "output": "build",
+  "targets": {
+    "qori": {
+      "type": "executable",
+      "linked-libraries": [
+        "wayland-server",
+        "wlroots-0.21",
+        "xkbcommon"
+      ]
+    },
+    "github": {
+      "type": "executable",
+      "name": "qori",
+      "opt": "O4",
+      "debug-info": "none",
+      "link-args": [
+        "-s",
+        "-Wl,--start-group",
+        "-lwayland-server",
+        "-lwlroots-0.21",
+        "-lxkbcommon",
+        "-ldisplay-info",
+        "-lliftoff",
+        "-ldrm",
+        "-lpixman-1",
+        "-linput",
+        "-ludev",
+        "-lgbm",
+        "-lseat",
+        "-lwayland-client",
+        "-lEGL",
+        "-lGLESv2",
+        "-lvulkan",
+        "-llcms2",
+        "-lffi",
+        "-lm",
+        "-lrt",
+        "-Wl,--end-group"
+      ]
+    }
+  },
+  "cpu": "generic",
+  "opt": "O0"
+}
