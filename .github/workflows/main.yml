@@ -172,8 +172,12 @@ jobs:
 
       - name: Create static library compatibility symlink
         run: |
-          # Links libwlroots.a to libwlroots-0.21.a to satisfy project.json
-          sudo find /usr/local/lib -name "libwlroots.a" -exec sh -c 'ln -sf "$1" "$(dirname "$1")/libwlroots-0.21.a"' _ {} \;
+          # link libwlroots.a to libwlroots-0.21.a depending on where Meson installed it
+          if [ -f /usr/local/lib/x86_64-linux-gnu/libwlroots.a ]; then
+            sudo ln -sf libwlroots.a /usr/local/lib/x86_64-linux-gnu/libwlroots-0.21.a
+          elif [ -f /usr/local/lib/libwlroots.a ]; then
+            sudo ln -sf libwlroots.a /usr/local/lib/libwlroots-0.21.a
+          fi
 
       - name: Setup C3 Compiler
         uses: ManuLinares/setup-c3@main
