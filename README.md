@@ -8,7 +8,9 @@
   <a href="https://github.com/ManuLinares/qori/releases"><strong>Download Qori</strong></a>
 </div>
 
-<video src="preview.mp4" controls></video>
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/1449b300-136c-4db8-8c09-ef3d5ce90e2c" width="100%" controls></video>
+</p>
 
 ## Shortcuts
 
