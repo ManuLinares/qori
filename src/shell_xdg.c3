@@ -326,11 +326,11 @@ fn void toplevel_handle_destroy(WlListener* listener, void* data)
 	toplevel_cleanup_listeners(toplevel);
 	if (handle != null) wlr::wlr_foreign_toplevel_handle_v1_destroy(handle);
 	mem::free(toplevel);
-	if (!g_has_startup_cmd && wl::wl_list_empty(&g_server.toplevels))
-	{
-		wl::wl_display_terminate(g_server.display);
-		return;
-	}
+	// if (!g_has_startup_cmd && wl::wl_list_empty(&g_server.toplevels))
+	// {
+	// 	wl::wl_display_terminate(g_server.display);
+	// 	return;
+	// }
 	if (was_focused)
 	{
 		Toplevel* next = null;

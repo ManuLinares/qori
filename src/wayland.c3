@@ -61,11 +61,6 @@ fn void wl_signal_add(WlSignal* signal, WlListener* listener)
 // Usage: wayland::@container_of(listener_ptr, Output, frame)
 macro @container_of(ptr, $Type, #field)
 {
-	usz $off = 0;
-	$foreach $m : $Type::members:
-		$if $m.name == $stringify(#field):
-			$off = $m.offset;
-		$endif
-	$endforeach
-	return ($Type*)((char*)ptr - $off);
+    sz $off = $reflect($Type.$eval($stringify(#field))).offset;
+    return ($Type*)((char*)ptr - $off);
 }

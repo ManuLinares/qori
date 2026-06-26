@@ -1,0 +1,17 @@
+
+Wayland Protocols
+
+  - wp-fractional-scale-v1, for high-DPI scaling without blurriness (complements my existing wp-viewporter setup).
+  - xdg-decoration-unstable-v1, for telling clients to draw their own borders so windows don't appear borderless.
+  - ext-idle-notify-v1 and ext-idle-inhibit-v1, for automatically triggering session lock after inactivity, and letting video players temporarily block it.
+  - wlr-screencopy-unstable-v1, for screen capturing tools (like grim) to take screenshots, and record the screen.
+  - wlr-output-management-unstable-v1, for display managers (like kanshi) to configure screen resolutions and layouts dynamically on hotplug.
+  - maybe tearing-control-v1, for games and performance-focused applications to disable VSync and minimize input lag.
+  - low priority text-input-unstable-v3 and input-method-unstable-v2, for typing with virtual keyboards and multi-language input editors (IMEs).
+
+More Core Features
+
+  - Dynamic hotkey mapping, for letting users customize keyboard shortcuts without recompiling.
+  - wlr_scene_rect borders around window nodes, for visually identifying which window is currently active and focused.I'm happy with a thin red line
+  - Virtual workspace tracking, for managing window clutter by dynamically grouping and showing/hiding scene-graph trees.
+  - XWayland integration, for running legacy X11-only games and desktop applications. Just integrating the wlr_xwayland module from wlroots and setting up its life-cycle events would suffice.
